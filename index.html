@@ -2,223 +2,299 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>9-1 句子聽打挑戰</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>1-3 句子跟讀挑戰</title>
 <style>
 body { font-family: sans-serif; max-width: 600px; margin: auto; text-align: center; padding: 30px 15px; }
-#logo, #logo-game { width: 150px; max-width: 80%; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto; }
+#logo { width: 150px; max-width: 80%; margin-bottom: 10px; }
 #game-title { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
-#mode-select button, button { display: block; width: 80%; max-width: 300px; margin: 10px auto; padding: 12px 20px; font-size: 16px; cursor: pointer; text-align: center; }
-#check-btn, #next-btn, #submit-btn, #restart-btn, #mode-reselect-btn { width: 150px; }
+#question-number { font-size: 18px; margin-bottom: 10px; }
+#question-selector { margin: 20px 0; }
+button { padding: 10px 20px; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; background-color: #f0f0f0; cursor: pointer; transition: background-color 0.3s; }
+button:hover { background-color: #4a90e2; color: #fff; }
+.selector-btn { width: 40px; height: 40px; margin: 5px; padding: 0; border-radius: 50%; }
 .hidden { display: none; }
-#answer, #nickname { padding: 8px; font-size: 16px; width: 80%; max-width: 300px; margin: 10px auto; display: block; text-align: center; }
-audio { width: 100%; max-width: 500px; margin: 20px 0; display: block; margin-left:auto;margin-right:auto;}
-#completion-note-practice, #completion-note-challenge { margin-top: 10px; font-size: 16px; color: #555; }
+.audio-player-container { margin: 10px 0; }
+audio { width: 100%; max-width: 500px; margin: 0 auto; display: block; }
+.question-text { font-size: 20px; margin-bottom: 10px; font-weight: bold; }
+.keywords { font-size: 20px; margin-bottom: 10px; }
+#question-controls { margin-top: 20px; }
+.record-btns { display: flex; justify-content: center; gap: 10px; margin: 10px 0; }
+#progress-container { margin-top: 15px; font-size: 16px; }
+#progress-bar { width: 100%; background-color: #eee; border-radius: 10px; overflow: hidden; height: 25px; margin-top: 5px; }
+#progress-fill { height: 100%; width: 0%; background-color: #4a90e2; text-align: center; color: #fff; line-height: 25px; font-weight: bold; transition: width 0.3s; }
+.completed { background-color: #4caf50; color: #fff; }
 </style>
 </head>
 <body>
+<img id="logo" src="logo.png" alt="Logo">
+<div id="game-title">1-3 句子跟讀挑戰</div>
 
-<script>
-var password = prompt("請輸入密碼才能進入此網站：");
-if (password !== "1231") { alert("密碼錯誤，無法進入！"); window.location.href = "https://www.google.com"; }
-</script>
-
-<div id="mode-select">
-<img id="logo" src="logo.png" alt="Logo" />
-<h2>請選擇模式</h2>
-<button id="mode-practice-btn">練習模式（無時間限制）</button>
-<button id="mode-challenge-btn">挑戰模式（限時）</button>
-<p style="font-size:14px; color:#555; margin-top:10px;">兩種模式皆可重複練習～</p>
+<div id="nickname-container">
+  <div style="font-size:20px; font-weight:bold; margin-bottom:10px;">歡迎挑戰者到來</div>
+  <div style="margin-bottom:10px;">請輸入您的姓名</div>
+  <input type="text" id="nickname-input" placeholder="您的名字" style="padding:5px 10px; font-size:16px; width:80%; max-width:300px; margin-bottom:15px;">
+  <br>
+  <button id="start-game-btn">開始挑戰</button>
 </div>
 
-<div id="game-area" class="hidden">
-<img id="logo-game" src="logo.png" alt="Logo"/>
-<div id="game-title"></div>
-<div id="question-number"></div>
-<div id="timer" style="font-size:18px; color:red; margin-bottom:15px;"></div>
-<audio id="audio" controls></audio>
-<input type="text" id="answer" placeholder="請輸入聽到的內容" autocomplete="off" />
-<div class="note" id="hint" style="color:#757575;">請注意空格與標點符號</div>
-<div id="result" style="min-height: 60px; margin-top: 10px;"></div>
-<button id="check-btn" disabled>確認</button>
-<button id="next-btn" style="display:none;">下一題</button>
+<div id="game-container" class="hidden">
+  <div id="question-number">第 <span id="current-number">1</span> 題 / 共 10 題</div>
+  <div id="question-selector"><strong>題目選擇：</strong></div>
+  <div id="question-text" class="question-text"></div>
+  <div class="practice-hint">進階練習：看著關鍵字，試著說出句子</div>
+  <div id="keywords" class="keywords"></div>
+  <button id="toggle-pro-mode">高手模式</button>
+  <div class="pro-mode-hint">進入高手模式後 題目與關鍵字都會隱藏</div>
+  <div id="question-controls">
+    <div class="audio-player-container">
+      <audio id="audio-player" controls></audio>
+    </div>
+    <div class="record-btns">
+      <button id="start-btn">開始錄音</button>
+      <button id="stop-btn" disabled>停止錄音</button>
+    </div>
+    <div class="user-audio-container">
+      <audio id="user-audio" controls class="hidden"></audio>
+      <button id="submit-audio-btn" class="hidden" style="margin-top:10px;">提交錄音</button>
+    </div>
+  </div>
+  <div id="progress-container">
+    已完成題目：<span id="completed-list">無</span>
+    <div id="progress-bar">
+      <div id="progress-fill">0%</div>
+    </div>
+    <div id="match-status" style="margin-top:10px; font-weight:bold; color:#4a90e2;"></div>
+  </div>
 </div>
 
-<div id="nickname-section" class="hidden" style="margin-top:20px;">
-<div id="completion-title" style="font-size:20px; margin-bottom:10px; color:#333;"></div>
-<input type="text" id="nickname" placeholder="請輸入姓名＋生日( 範例：王小明0828 )" />
-<div id="completion-note-practice" class="hidden" style="text-align:center; color:#555;"></div>
-<div id="completion-note-challenge" class="hidden" style="text-align:center; color:#555;"></div>
-<button id="submit-btn" disabled>提交成績</button>
-<button id="restart-btn">重新開始</button>
-<button id="mode-reselect-btn" style="margin-top:10px;">重新選擇模式</button>
-</div>
-
+<script src="recorder.js"></script>
 <script>
 const questions = [
-  { audio: "12090101S.mp3", answer: "우리 집에 와서 밥을 먹어요.", chinese: "來我們家吃飯。" },
-  { audio: "12090102S.mp3", answer: "빨리 집에 가서 쉬어요.", chinese: "快點回家休息。" },
-  { audio: "12090103S.mp3", answer: "전화해서 물어보세요.", chinese: "請打電話問看看。" },
-  { audio: "12090104S.mp3", answer: "생일 선물을 사서 줬어요.", chinese: "買了生日禮物給他。" },
-  { audio: "12090105S.mp3", answer: "오후에 병원에 가서 주사를 맞았어요.", chinese: "下午去醫院打針了。" },
-  { audio: "12090106S.mp3", answer: "저녁에 국밥을 만들어서 먹을 거예요.", chinese: "晚餐要煮湯飯來吃。" },
-  { audio: "12090107S.mp3", answer: "아침에 일찍 일어나서 일했어요.", chinese: "早上很早就起床工作了。" },
-  { audio: "12090108S.mp3", answer: "변호사와 앉아서 얘기하고 있어요.", chinese: "正在和律師坐著聊天。" },
-  { audio: "12090109S.mp3", answer: "돈을 찾아서 월세를 냈어요.", chinese: "領錢繳了房租。" },
-  { audio: "12090110S.mp3", answer: "휴게소에 들어서 음료수를 샀어요.", chinese: "去休息站買了飲料。" },
-  { audio: "12090111S.mp3", answer: "밤에 학교에 남아서 시험 공부할 거예요.", chinese: "晚上要留在學校準備考試。" },
-  { audio: "12090112S.mp3", answer: "옷을 벗어서 옷걸이에 걸어요.", chinese: "把衣服脫下來掛在衣架上。" }
+  { audio: "audio/21020401S.mp3", text: "비가 오지 않으면 내일 등산하러 갈 거예요.", keywords: "비, 오다, 내일, 등산, 가다" },
+  { audio: "audio/21020402S.mp3", text: "운동이 힘들지만 다이어트하고 있어서 쉬지 않고 계속할 거예요.", keywords: "운동, 힘들다, 다이어트, 쉬다, 계속하다" },
+  { audio: "audio/21020403S.mp3", text: "한국 음식이 맵지 않아서 친구와 자주 먹어요.", keywords: "한국 음식, 맵다, 친구, 자주, 먹다" },
+  { audio: "audio/21020404S.mp3", text: "피곤하지만 잠이 오지 않아서 영화를 보고 있어요.", keywords: "피곤하다, 잠, 오다, 영화, 보다" },
+  { audio: "audio/21020405S.mp3", text: "날씨가 춥지 않았지만 바람이 많이 불었어요.", keywords: "날씨, 춥다, 바람, 많이, 불다" },
+  { audio: "audio/21020406S.mp3", text: "아직 숙제를 끝내지 않아서 놀 수 없어요.", keywords: "숙제, 끝내다, 놀다, 없다" },
+  { audio: "audio/21020407S.mp3", text: "저는 노래를 잘하지 않지만 노래방에서 부르는 걸 좋아해요.", keywords: "노래, 잘하다, 노래방, 부르다, 좋아하다" },
+  { audio: "audio/21020408S.mp3", text: "혼자 있는 걸 싫어하지 않지만 친구들과 노는 걸 더 좋아해요.", keywords: "혼자, 싫어하다, 친구, 놀다, 좋아하다" },
+  { audio: "audio/21020409S.mp3", text: "운동을 자주 하지 않아서 체력이 많이 떨어졌어요.", keywords: "운동, 자주, 체력, 많이, 떨어지다" },
+  { audio: "audio/21020410S.mp3", text: "여자 친구가 한 말을 듣지 않아서 싸웠어요.", keywords: "여자 친구, 말, 듣다, 싸우다" }
 ];
 
-const modeSelectDiv = document.getElementById("mode-select");
-const modePracticeBtn = document.getElementById("mode-practice-btn");
-const modeChallengeBtn = document.getElementById("mode-challenge-btn");
-const gameAreaDiv = document.getElementById("game-area");
-const gameTitle = document.getElementById("game-title");
-const questionNumberDiv = document.getElementById("question-number");
-const timerDiv = document.getElementById("timer");
-const audioEl = document.getElementById("audio");
-const answerInput = document.getElementById("answer");
-const checkBtn = document.getElementById("check-btn");
-const nextBtn = document.getElementById("next-btn");
-const resultDiv = document.getElementById("result");
-const nicknameSection = document.getElementById("nickname-section");
-const completionTitle = document.getElementById("completion-title");
-const nicknameInput = document.getElementById("nickname");
-const submitBtn = document.getElementById("submit-btn");
-const restartBtn = document.getElementById("restart-btn");
-const modeReselectBtn = document.getElementById("mode-reselect-btn");
-const completionNotePractice = document.getElementById("completion-note-practice");
-const completionNoteChallenge = document.getElementById("completion-note-challenge");
+let currentQuestion = 0;
+let isProMode = false;
+let recorder, audioContext, stream;
+let startTime = Date.now();
+let completedQuestions = [];
 
-let shuffledQuestions = [];
-let current = 0;
-let correct = 0;
-let finalScore = 0;
-let timer = null;
-let timeLeft = 0;
-let timerStarted = false;
-let currentMode = null;
-let startTime = null; // 記錄挑戰開始時間
+const unit = "41-1-3 句子跟讀挑戰";
 
-// 顯示標題與送表單標題
-const displayTitle = "9-1 句子聽打挑戰";
-const fullTitle = "12-9-1 句子聽打挑戰";
+const questionText = document.getElementById("question-text");
+const keywordsDiv = document.getElementById("keywords");
+const currentNumberSpan = document.getElementById("current-number");
+const audioPlayer = document.getElementById("audio-player");
+const userAudio = document.getElementById("user-audio");
+const startBtn = document.getElementById("start-btn");
+const stopBtn = document.getElementById("stop-btn");
+const proModeBtn = document.getElementById("toggle-pro-mode");
+const completedListSpan = document.getElementById("completed-list");
+const progressFill = document.getElementById("progress-fill");
+const submitBtn = document.getElementById("submit-audio-btn");
+const matchStatus = document.getElementById("match-status");
 
-function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+const nicknameContainer = document.getElementById("nickname-container");
+const nicknameInput = document.getElementById("nickname-input");
+const startGameBtn = document.getElementById("start-game-btn");
+const gameContainer = document.getElementById("game-container");
 
-function showModeSelect(){
-  modeSelectDiv.style.display="block";
-  gameAreaDiv.classList.add("hidden");
-  nicknameSection.classList.add("hidden");
-  resetGameVars();
+function showQuestion() {
+  const q = questions[currentQuestion];
+  questionText.textContent = q.text;
+  keywordsDiv.textContent = `[${q.keywords}]`;
+  currentNumberSpan.textContent = currentQuestion + 1;
+  audioPlayer.src = q.audio;
+  userAudio.classList.add("hidden");
+  userAudio.src = "";
+  submitBtn.classList.add("hidden");
+  questionText.style.visibility = isProMode ? "hidden" : "visible";
+  keywordsDiv.style.visibility = isProMode ? "hidden" : "visible";
+  matchStatus.textContent = "";
 }
 
-function showGameArea(){
-  modeSelectDiv.style.display="none";
-  gameAreaDiv.classList.remove("hidden");
-  nicknameSection.classList.add("hidden");
-  timerDiv.style.display=currentMode==="challenge"?"block":"none";
-  submitBtn.disabled=true;
-  gameTitle.textContent = displayTitle; // 顯示給玩家的標題
-  if(currentMode==="challenge"){
-    timeLeft=shuffledQuestions.length*50;
-    timerDiv.textContent=`剩餘時間：${timeLeft} 秒`;
-  } else {
-    timerDiv.textContent="";
+function createQuestionButtons() {
+  const selector = document.getElementById("question-selector");
+  selector.innerHTML = "<strong>題目選擇：</strong>";
+  questions.forEach((_, idx) => {
+    const btn = document.createElement("button");
+    btn.textContent = idx + 1;
+    btn.className = "selector-btn";
+    if (completedQuestions.includes(idx+1)) btn.classList.add("completed");
+    btn.onclick = () => {
+      stopRecordingIfNeeded();
+      currentQuestion = idx;
+      showQuestion();
+    };
+    selector.appendChild(btn);
+  });
+}
+
+proModeBtn.onclick = () => {
+  isProMode = !isProMode;
+  questionText.style.visibility = isProMode ? "hidden" : "visible";
+  keywordsDiv.style.visibility = isProMode ? "hidden" : "visible";
+  proModeBtn.textContent = isProMode ? "恢復題目顯示" : "高手模式";
+};
+
+startBtn.onclick = async () => {
+  stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const input = audioContext.createMediaStreamSource(stream);
+  recorder = new Recorder(input, { numChannels: 1 });
+  recorder.record();
+  startBtn.disabled = true;
+  stopBtn.disabled = false;
+
+  questionText.style.visibility = "hidden";
+};
+
+stopBtn.onclick = () => {
+  recorder.stop();
+  stream.getAudioTracks()[0].stop();
+
+  recorder.exportWAV(blob => {
+    userAudio.src = URL.createObjectURL(blob);
+    userAudio.classList.remove("hidden");
+    submitBtn.classList.remove("hidden");
+  });
+
+  startBtn.disabled = false;
+  stopBtn.disabled = true;
+  if (!isProMode) questionText.style.visibility = "visible";
+};
+
+submitBtn.onclick = () => {
+  const nickname = nicknameInput.value.trim() || "未輸入";
+  const timeSpent = Math.floor((Date.now() - startTime)/1000);
+
+  let dots = 0;
+  matchStatus.textContent = "比對中";
+  const interval = setInterval(() => {
+    dots = (dots + 1) % 4;
+    matchStatus.textContent = "比對中" + "·".repeat(dots);
+  }, 500);
+
+  submitBtn.classList.add("hidden");
+
+  recognizeSpeech((recognizedText) => {
+    clearInterval(interval);
+    const target = questions[currentQuestion].text;
+    const score = similarity(recognizedText, target);
+
+    if (score >= 70) {
+      matchStatus.textContent = `✅ 通過！相似度 ${score.toFixed(2)}%`;
+      if (!completedQuestions.includes(currentQuestion+1)) {
+        completedQuestions.push(currentQuestion+1);
+        updateProgress();
+        createQuestionButtons();
+        const totalScore = (completedQuestions.length / questions.length) * 100;
+        sendToGoogleForm(nickname, unit, totalScore, timeSpent, currentQuestion+1);
+      }
+    } else {
+      matchStatus.textContent = `❌ 未通過，相似度 ${score.toFixed(2)}%，請重新錄音！`;
+      userAudio.src = "";
+      userAudio.classList.add("hidden");
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+    }
+  });
+};
+
+function stopRecordingIfNeeded() {
+  if (recorder && recorder.recording) {
+    recorder.stop();
+    stream.getAudioTracks()[0].stop();
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
   }
-  startTime = Date.now(); // 開始挑戰時間
 }
 
-function resetGameVars(){
-  clearInterval(timer); timer=null; timerStarted=false; timeLeft=0;
-  current=0; correct=0; finalScore=0;
-  submitBtn.disabled=true; answerInput.value=""; answerInput.disabled=false;
-  checkBtn.disabled=true; nextBtn.style.display="none"; resultDiv.innerHTML="";
-  questionNumberDiv.textContent=""; timerDiv.textContent="";
+function updateProgress() {
+  completedListSpan.textContent = completedQuestions.length ? completedQuestions.join(",") : "無";
+  const percent = ((completedQuestions.length / questions.length) * 100).toFixed(0);
+  progressFill.style.width = percent + "%";
+  progressFill.textContent = percent + "%";
 }
 
-function loadQuestion(){
-  if(shuffledQuestions.length===0){shuffledQuestions=shuffle([...questions]);}
-  if(current>=shuffledQuestions.length){endGame();return;}
-  const q=shuffledQuestions[current];
-  audioEl.src=q.audio;
-  questionNumberDiv.textContent=`第 ${current+1} 題 / 共 ${shuffledQuestions.length} 題`;
-  audioEl.style.display="block"; answerInput.style.display="block"; checkBtn.style.display="block"; nextBtn.style.display="none"; questionNumberDiv.style.display="block"; resultDiv.style.display="block";
-  answerInput.value=""; answerInput.disabled=false; checkBtn.disabled=true; resultDiv.innerHTML="";
+function sendToGoogleForm(nickname, unit, score, time, questionNumber) {
+  const formURL = "https://docs.google.com/forms/d/e/1FAIpQLSdESq5-zNmGUoR1QoQ-CJAQaroQfdNPKxOiSgeiJH4s_64DRg/formResponse";
+  const formData = new FormData();
+  formData.append("entry.1082970818", nickname);
+  formData.append("entry.851626887", unit);
+  formData.append("entry.498226528", score);
+  formData.append("entry.532888754", time);
+  formData.append("entry.1930371772", questionNumber);
+  fetch(formURL, { method: "POST", body: formData, mode: "no-cors" })
+    .then(() => console.log("已送出到 Google 表單！"))
+    .catch(err => console.error("送出失敗：", err));
 }
 
-function startTimer(){
-  if(timerStarted||currentMode==="practice")return;
-  timerStarted=true; if(timeLeft<=0)timeLeft=shuffledQuestions.length*10;
-  timer=setInterval(()=>{
-    timeLeft--;
-    timerDiv.textContent=`剩餘時間：${timeLeft} 秒`;
-    if(timeLeft<=0){clearInterval(timer); endGame();}
-  },1000);
-}
+async function fetchPreviousProgress(nickname) {
+  const apiUrl = "https://api.sheetbest.com/sheets/35939562-3d48-4fd0-9f49-689667e539f8";
+  const apiKey = "w6rPgNCJ@o3#T#wNUqJr$Wlii53@IvANGznsOWETWo92i#LzHdvW3jj5OELq17-z";
 
-modePracticeBtn.addEventListener("click",()=>{currentMode="practice"; shuffledQuestions=shuffle([...questions]); resetGameVars(); showGameArea(); loadQuestion();});
-modeChallengeBtn.addEventListener("click",()=>{currentMode="challenge"; shuffledQuestions=shuffle([...questions]); resetGameVars(); showGameArea(); loadQuestion();});
+  try {
+    const response = await fetch(apiUrl, { headers: { Authorization: `Bearer ${apiKey}` } });
+    const data = await response.json();
 
-answerInput.addEventListener("input",()=>{checkBtn.disabled=answerInput.value.trim()==="";});
-audioEl.addEventListener("play",()=>{if(currentMode==="challenge"&&!timerStarted) startTimer();});
-answerInput.addEventListener("focus",()=>{if(currentMode==="challenge"&&!timerStarted) startTimer();});
+    const userRecords = data.filter(row => row.nickname === nickname && row.unit === unit);
+    const completedSet = new Set();
+    userRecords.forEach(row => {
+      if (row.questionNumber) completedSet.add(parseInt(row.questionNumber));
+    });
 
-checkBtn.addEventListener("click",()=>{
-  const userAns=answerInput.value.trim();
-  const q=shuffledQuestions[current];
-  const correctAns=q.answer.trim();
-  if(userAns===correctAns){resultDiv.innerHTML=`✅ 答對了🎉 你真棒👍🏻<br>📘 中文：<strong>${q.chinese}</strong>`; correct++;}
-  else{resultDiv.innerHTML=`❌ 錯誤。正確答案是：<strong>${correctAns}</strong><br>📘 中文：<strong>${q.chinese}</strong>`;}
-  answerInput.disabled=true; checkBtn.disabled=true; nextBtn.style.display="block"; resultDiv.style.display="block";
-});
+    completedQuestions = Array.from(completedSet).sort((a,b)=>a-b);
+    updateProgress();
 
-nextBtn.addEventListener("click",()=>{current++; if(current<shuffledQuestions.length){loadQuestion();} else {endGame();}});
-
-function endGame(){
-  clearInterval(timer); timerStarted=false;
-  finalScore=Math.round((correct/shuffledQuestions.length)*100);
-  const passStatus=finalScore>=80?"✅ 合格 可重新挑戰":"❌ 不合格 請重新挑戰";
-  completionTitle.textContent=`你答對 ${correct}/${shuffledQuestions.length} 題，得分 ${finalScore}% - ${passStatus}`;
-  nicknameSection.classList.remove("hidden");
-  if(currentMode==="practice"){
-    completionNotePractice.textContent="可重複練習\n最後記得到挑戰模式回傳合格成績歐！！";
-    completionNotePractice.style.whiteSpace="pre-line"; completionNotePractice.classList.remove("hidden");
-    completionNoteChallenge.classList.add("hidden"); nicknameInput.style.display="none"; submitBtn.style.display="none";
-  } else {
-    completionNotePractice.classList.add("hidden");
-    completionNoteChallenge.textContent="請回傳合格成績歐！！"; completionNoteChallenge.classList.remove("hidden");
-    nicknameInput.style.display="block"; submitBtn.style.display="inline-block"; submitBtn.disabled=finalScore<80;
+  } catch (err) {
+    console.error("讀取先前進度失敗:", err);
   }
-  audioEl.style.display="none"; answerInput.style.display="none"; checkBtn.style.display="none"; nextBtn.style.display="none";
-  questionNumberDiv.style.display="none"; timerDiv.style.display="none"; resultDiv.style.display="none";
 }
 
-submitBtn.addEventListener("click",()=>{
-  const nickname=nicknameInput.value.trim();
-  if(!nickname||finalScore<80)return;
-  const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000); // 花費時間秒數
-  const weekdayNames=["日","一","二","三","四","五","六"];
-  const weekday=weekdayNames[new Date().getDay()];
-  
-  const formURL="https://docs.google.com/forms/d/e/1FAIpQLSd8KhDu_lq6g4aPzkLaNYUUVG9P0E9cRT1R2WVDIkkfFh7WxA/formResponse";
-  const formData=new FormData();
-  formData.append("entry.1082970818",nickname);
-  formData.append("entry.851626887",finalScore);
-  formData.append("entry.498226528",elapsedSeconds + " 秒"); // 回傳花費秒數
-  formData.append("entry.532888754",weekday);
-  formData.append("entry.1110600272",fullTitle); // 使用完整標題回傳表單
-  
-  fetch(formURL,{method:"POST",body:formData,mode:"no-cors"})
-    .then(()=>alert("成績已送出，謝謝！"))
-    .catch(()=>alert("無法送出成績，請稍後再試。"));
-});
+nicknameInput.onblur = () => {
+  const name = nicknameInput.value.trim();
+  if (name) fetchPreviousProgress(name);
+};
 
-restartBtn.addEventListener("click",()=>{resetGameVars(); shuffledQuestions=shuffle([...questions]); showGameArea(); loadQuestion();});
-modeReselectBtn.addEventListener("click",()=>{currentMode=null; resetGameVars(); showModeSelect();});
+startGameBtn.onclick = () => {
+  if (!nicknameInput.value.trim()) {
+    alert("請輸入您的姓名");
+    return;
+  }
+  nicknameContainer.classList.add("hidden");
+  gameContainer.classList.remove("hidden");
+  startTime = Date.now();
+  showQuestion();
+  createQuestionButtons();
+  updateProgress();
+};
 
-showModeSelect();
+function similarity(a, b) {
+  if (!a || !b) return 0;
+  a = a.toLowerCase(); b = b.toLowerCase();
+  let same = 0;
+  const minLen = Math.min(a.length, b.length);
+  for (let i=0;i<minLen;i++) if (a[i]===b[i]) same++;
+  return (same / b.length) * 100;
+}
+
+function recognizeSpeech(callback) {
+  setTimeout(() => {
+    const random = Math.random();
+    callback(random>0.5 ? questions[currentQuestion].text : "隨機錯誤結果");
+  }, 2000);
+}
 </script>
 </body>
 </html>
